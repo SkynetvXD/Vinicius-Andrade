@@ -662,27 +662,26 @@ p{ margin: 0; }
   .site-footer__inner{ grid-template-columns: 1fr; gap: 26px; }
 }
 
-/* =========================================================================
-   WHATSAPP FLUTUANTE
-   ========================================================================= */
-.whatsapp-float{
-  position: fixed;
-  right: 20px; bottom: 20px;
-  z-index: 150;
-  display:flex; align-items:center; gap:8px;
-  background: var(--navy);
-  color: var(--white);
-  padding: 12px 18px 12px 14px;
-  border-radius: 999px;
-  box-shadow: var(--shadow-soft);
-  font-size: 13.5px;
-  font-weight: 700;
-  transition: background-color .18s ease;
+/* honeypot anti-spam: precisa ficar fora da tela, mas acessível ao navegador */
+.honeypot{
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px; height: 1px;
+  opacity: 0;
 }
-.whatsapp-float:hover{ background: var(--terracotta-dark); }
-.whatsapp-float svg{ width: 20px; height: 20px; fill: currentColor; }
 
-@media (max-width: 700px){
-  .whatsapp-float span{ display:none; }
-  .whatsapp-float{ padding: 13px; }
+.site-footer__label{
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #93897A;
+  margin-bottom: 10px;
 }
+.footer-link{
+  font-weight: 700;
+  color: var(--cream) !important;
+  border-bottom: 1px solid rgba(246,241,231,0.35);
+  padding-bottom: 2px;
+}
+.footer-link:hover{ color: var(--terracotta-light) !important; border-color: var(--terracotta-light); }
