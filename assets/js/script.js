@@ -2,6 +2,16 @@
    VINÍCIUS ANDRADE — PSICOTERAPIA ONLINE
    JavaScript vanilla — sem dependências externas
    ========================================================================== */
+
+/* ============================================================
+   ENDEREÇO DO GOOGLE APPS SCRIPT — configuração obrigatória.
+
+   Depois de publicar o Apps Script como Web App (veja o código
+   em apps-script/Code.gs e o passo a passo no README.md), cole
+   aqui a URL que termina em /exec.
+   ============================================================ */
+var SCRIPT_URL = "COLE_AQUI_A_URL_DO_APPS_SCRIPT";
+
 (function () {
   "use strict";
 
@@ -20,7 +30,6 @@
       mobileNav.hidden = isOpen;
     });
 
-    // fecha o menu ao clicar em um link
     mobileNav.querySelectorAll("a").forEach(function (link) {
       link.addEventListener("click", function () {
         navToggle.setAttribute("aria-expanded", "false");
@@ -68,9 +77,32 @@
   var form = document.getElementById("preAtendimentoForm");
   var statusEl = document.getElementById("formStatus");
   var submitBtn = document.getElementById("formSubmitBtn");
+  var origemInput = document.getElementById("origemPagina");
+
+  // registra de onde a pessoa veio (útil para saber se o lead chegou via
+  // Google Ads, orgânico, Instagram etc.)
+  if (origemInput) {
+    origemInput.value = document.referrer || "Acesso direto";
+  }
+
+  // dias da semana usados no calendário de disponibilidade
+  var DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+  function resetTouchedState() {
+    form.querySelectorAll(".touched").forEach(function (f) {
+      f.classList.remove("touched");
+    });
+  }
+
+  function resetAvailability() {
+    if (!availGrid) return;
+    availGrid.classList.remove("is-disabled");
+    availGrid.querySelectorAll('input[type="checkbox"]').forEach(function (i) {
+      i.disabled = false;
+    });
+  }
 
   if (form) {
-    // marca campos como "tocados" para exibir validação apenas após interação
     form.querySelectorAll("input, select, textarea").forEach(function (field) {
       field.addEventListener("blur", function () {
         field.classList.add("touched");
@@ -80,8 +112,18 @@
     form.addEventListener("submit", function (event) {
       event.preventDefault();
 
+      // honeypot: se o campo invisível foi preenchido, é um bot —
+      // finge sucesso sem enviar nada.
+      var honeypot = document.getElementById("honeypot");
+      if (honeypot && honeypot.value) {
+        statusEl.textContent =
+          "Recebi suas informações. Em breve entro em contato.";
+        statusEl.className = "form-status is-success";
+        form.reset();
+        return;
+      }
+
       if (!form.checkValidity()) {
-        // ativa a validação nativa do navegador (mensagens em português do sistema)
         form.reportValidity();
         form.querySelectorAll("input, select, textarea").forEach(function (field) {
           field.classList.add("touched");
@@ -92,11 +134,9 @@
         return;
       }
 
-      var actionUrl = form.getAttribute("action") || "";
-      if (actionUrl.indexOf("SEU_FORM_ID") !== -1) {
-        // Lembrete para quem está configurando o site pela primeira vez.
+      if (!SCRIPT_URL || SCRIPT_URL.indexOf("COLE_AQUI") !== -1) {
         statusEl.textContent =
-          "Configuração pendente: defina o endpoint de envio (Formspree/FormSubmit) em index.html antes de publicar. Veja o README.md.";
+          "Configuração pendente: defina SCRIPT_URL em assets/js/script.js antes de publicar. Veja o README.md.";
         statusEl.className = "form-status is-error";
         return;
       }
@@ -107,39 +147,42 @@
       statusEl.className = "form-status";
 
       var formData = new FormData(form);
+      var payload = {};
 
-      fetch(actionUrl, {
+      formData.forEach(function (value, key) {
+        if (DIAS_SEMANA.indexOf(key) !== -1) return; // tratado à parte abaixo
+        payload[key] = value;
+      });
+
+      // disponibilidade: cada dia pode ter vários horários marcados
+      DIAS_SEMANA.forEach(function (dia) {
+        var valores = formData.getAll(dia);
+        payload[dia] = valores.length ? valores.join(", ") : "—";
+      });
+
+      // Envio em text/plain evita o preflight de CORS, que o Apps Script
+      // não responde de forma confiável. Por isso usamos mode: "no-cors":
+      // a requisição é entregue e processada no servidor (o e-mail é
+      // enviado), mas o navegador não deixa a página ler a resposta —
+      // por isso tratamos qualquer envio sem erro de rede como sucesso.
+      fetch(SCRIPT_URL, {
         method: "POST",
-        body: formData,
-        headers: { Accept: "application/json" },
+        mode: "no-cors",
+        body: JSON.stringify(payload),
       })
-        .then(function (response) {
-          if (response.ok) {
-            statusEl.textContent =
-              "Recebi suas informações. Em breve entro em contato pelo WhatsApp ou e-mail informado.";
-            statusEl.className = "form-status is-success";
-            pushEvent("form_submit_success", "pre_atendimento");
-            form.reset();
-            if (availGrid) {
-              availGrid.classList.remove("is-disabled");
-              availGrid.querySelectorAll('input[type="checkbox"]').forEach(function (i) {
-                i.disabled = false;
-              });
-            }
-            form.querySelectorAll(".touched").forEach(function (f) {
-              f.classList.remove("touched");
-            });
-          } else {
-            return response.json().then(function (data) {
-              throw new Error(
-                (data && data.error) || "Não foi possível enviar o formulário."
-              );
-            });
-          }
+        .then(function () {
+          statusEl.textContent =
+            "Recebi suas informações. Vou analisar e entrar em contato pelo e-mail ou WhatsApp informado.";
+          statusEl.className = "form-status is-success";
+          pushEvent("form_submit_success", "pre_atendimento");
+          form.reset();
+          resetAvailability();
+          resetTouchedState();
+          if (origemInput) origemInput.value = document.referrer || "Acesso direto";
         })
         .catch(function () {
           statusEl.textContent =
-            "Não foi possível enviar agora. Tente novamente ou fale comigo diretamente pelo WhatsApp.";
+            "Não foi possível enviar agora por uma falha de conexão. Tente novamente em instantes.";
           statusEl.className = "form-status is-error";
         })
         .finally(function () {
