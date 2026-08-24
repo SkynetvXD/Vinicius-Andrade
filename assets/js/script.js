@@ -10,7 +10,7 @@
    em apps-script/Code.gs e o passo a passo no README.md), cole
    aqui a URL que termina em /exec.
    ============================================================ */
-var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBXCVnjfBxoKi_raXC9APoC7k9PhQ4o9WI3F230GEx-8C3XgrBiUVDX-dwU-0ZfObE/exec";
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiuT5RE9FIe6if8Rf_oPi50mtxXVPOubj8ZL-6TCoDDNQLfbXWmcDuk5n7T1-pT3f3Zw/exec";
 
 (function () {
   "use strict";
