@@ -88,20 +88,6 @@ var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiuT5RE9FIe6if8Rf_oPi
   // dias da semana usados no calendário de disponibilidade
   var DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
-  function resetTouchedState() {
-    form.querySelectorAll(".touched").forEach(function (f) {
-      f.classList.remove("touched");
-    });
-  }
-
-  function resetAvailability() {
-    if (!availGrid) return;
-    availGrid.classList.remove("is-disabled");
-    availGrid.querySelectorAll('input[type="checkbox"]').forEach(function (i) {
-      i.disabled = false;
-    });
-  }
-
   if (form) {
     form.querySelectorAll("input, select, textarea").forEach(function (field) {
       field.addEventListener("blur", function () {
@@ -113,13 +99,10 @@ var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiuT5RE9FIe6if8Rf_oPi
       event.preventDefault();
 
       // honeypot: se o campo invisível foi preenchido, é um bot —
-      // finge sucesso sem enviar nada.
+      // redireciona como se fosse sucesso, sem enviar nada.
       var honeypot = document.getElementById("honeypot");
       if (honeypot && honeypot.value) {
-        statusEl.textContent =
-          "Recebi suas informações. Em breve entro em contato.";
-        statusEl.className = "form-status is-success";
-        form.reset();
+        window.location.href = "obrigado.html";
         return;
       }
 
@@ -164,21 +147,17 @@ var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiuT5RE9FIe6if8Rf_oPi
       // não responde de forma confiável. Por isso usamos mode: "no-cors":
       // a requisição é entregue e processada no servidor (o e-mail é
       // enviado), mas o navegador não deixa a página ler a resposta —
-      // por isso tratamos qualquer envio sem erro de rede como sucesso.
+      // por isso tratamos qualquer envio sem erro de rede como sucesso
+      // e redirecionamos para a página de agradecimento (obrigado.html),
+      // que também serve como página de conversão do Google Ads.
       fetch(SCRIPT_URL, {
         method: "POST",
         mode: "no-cors",
         body: JSON.stringify(payload),
       })
         .then(function () {
-          statusEl.textContent =
-            "Recebi suas informações. Vou analisar e entrar em contato pelo e-mail ou WhatsApp informado.";
-          statusEl.className = "form-status is-success";
           pushEvent("form_submit_success", "pre_atendimento");
-          form.reset();
-          resetAvailability();
-          resetTouchedState();
-          if (origemInput) origemInput.value = document.referrer || "Acesso direto";
+          window.location.href = "obrigado.html";
         })
         .catch(function () {
           statusEl.textContent =
