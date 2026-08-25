@@ -685,3 +685,31 @@ p{ margin: 0; }
   padding-bottom: 2px;
 }
 .footer-link:hover{ color: var(--terracotta-light) !important; border-color: var(--terracotta-light); }
+
+/* =========================================================================
+   PÁGINA DE AGRADECIMENTO (obrigado.html)
+   ========================================================================= */
+.thanks{ padding: 120px 0; min-height: 60vh; display:flex; align-items:center; }
+.thanks__inner{ max-width: 620px; }
+.thanks__title{
+  font-size: clamp(2rem, 1.5rem + 2vw, 3rem);
+  line-height: 1.15;
+  margin-bottom: 20px;
+}
+.thanks__sub{
+  font-size: 17px;
+  color: var(--warm-gray);
+  margin-bottom: 32px;
+  max-width: 520px;
+}
+.thanks__note{
+  background: var(--cream-deep);
+  border-left: 2px solid var(--terracotta);
+  padding: 18px 22px;
+  margin-bottom: 36px;
+}
+.thanks__note p{ font-size: 14.5px; color: var(--ink); line-height: 1.6; }
+
+@media (max-width: 700px){
+  .thanks{ padding: 72px 0; }
+}
